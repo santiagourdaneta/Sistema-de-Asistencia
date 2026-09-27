@@ -1561,8 +1561,14 @@ if (typeof jQuery === 'undefined') {
   Tooltip.prototype.setContent = function () {
     var $tip  = this.tip()
     var title = this.getTitle()
+    var $inner = $tip.find('.tooltip-inner')
 
-    $tip.find('.tooltip-inner')[this.options.html ? 'html' : 'text'](title)
+    if (this.options.html) {
+      $inner.html(this.sanitizeHtml(title))
+    } else {
+      $inner.text(title)
+    }
+
     $tip.removeClass('fade in top bottom left right')
   }
 
@@ -1664,6 +1670,29 @@ if (typeof jQuery === 'undefined') {
     }
 
     return delta
+  }
+
+  Tooltip.prototype.sanitizeHtml = function (unsafeHtml) {
+    if (!unsafeHtml) return unsafeHtml
+
+    var $container = $('<div>').html(unsafeHtml)
+
+    $container.find('script, style, iframe, object, embed, link, meta').remove()
+
+    $container.find('*').each(function () {
+      var attrs = this.attributes
+      for (var i = attrs.length - 1; i >= 0; i--) {
+        var name = attrs[i].name
+        var value = attrs[i].value
+        if (/^on/i.test(name)) {
+          this.removeAttribute(name)
+        } else if ((name === 'href' || name === 'src' || name === 'xlink:href') && /^\s*javascript:/i.test(value)) {
+          this.removeAttribute(name)
+        }
+      }
+    })
+
+    return $container.html()
   }
 
   Tooltip.prototype.getTitle = function () {
